@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet"  crossorigin="anonymous"
+		href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/pure-min.css"
+		integrity="sha384-X38yfunGUhNzHpBaEBsWLO+A0HDYOQi8ufWDkZ0k9e0eXz/tH3II7uKZ9msv++Ls">
+	<title>Viva Inventory</title>
+<style>
+form label { display: block; }
+form label strong { display: inline-block; width: 10em; text-align: right; }
+</style>
+</head>
+<body>
+<div>
+	<button !.signed_in? @click=".sign_in">Login</button>
+</div>
+<div .signed_in?>
+	<div>
+		<button @click=".go_home">home</button>
+		<button @click=".sign_out">Log out</button>
+	</div>
+	<div .show_home?>
+		<button>New Donation</button>
+		<button @click="add_bike">Add bike</button>
+		<input type="text" placeholder="Find bike...">
+		<button>Browse</button>
+	</div>
+
+	<form .new_bike :show-if="." class="pure-form pure-form-aligned">
+		<h2>New bike</h2>
+		<label>
+			<strong>Serial number:</strong>
+			<input .serial_number type="text">
+			<button @click="$.scanner.start">scan</button>
+		</label>
+		<label><strong>Make/model:</strong> <input .make_model type="text"></label>
+		<label><strong>Wheel size:</strong> <input .wheel_size type="text"></label>
+		<label><strong>Status:</strong>
+			<select .status>
+				<option>To scrap</option>
+				<option>To strip</option>
+				<option>To repair</option>
+			</select>
+		</label>
+		<button @click="$.save_bike">Save bike</button>
+	</form>
+
+	<div .scanner :show-if=".enabled">
+		<button @click=".stop">Close</button>
+		<div id="qr-reader" style="width: 600px"></div>
+	</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="http://localhost:8001/vivy.js"></script>
+<script>
+const db = supabase.createClient(
+	"https://sigezbqbtdhuftmkzyys.supabase.co",
+	"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpZ2V6YnFidGRodWZ0bWt6eXlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODc1NzI0NTcsImV4cCI6MjAwMzE0ODQ1N30.102HwkvuMQLRVcWY2sI8kXwHQemxaZW5GxAIYbHScF4"
+);
+
+const page = vivy(document.body, {
+	signed_in: false,
+	show_home: true,
+
+	go_home: () => {
+		page.show_home = true;
+		page.new_bike = null;
+	},
+	sign_in: async () => {
+		const { data, error } = await db.auth.signInWithOAuth({ provider: "google" });
+		if (error) return console.error(error);
+	},
+	sign_out: async () => {
+		const { error } = await db.auth.signOut();
+		if (error) return console.error(error);
+	},
+	add_bike: () => {
+		page.new_bike = {};
+		page.show_home = false;
+	},
+	save_bike: async () => {
+		console.log(page.new_bike.toJSON());
+		// const { data, error } = await db.from("bikes").insert(page.new_bike);
+		// if (error) return console.error(error);
+
+		page.new_bike = null;
+	},
+	scanner: (() => {
+		let renderer;
+
+		return {
+			enabled: false,
+			start: () => {
+				page.scanner.enabled = true;
+
+				renderer = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: 250 });
+				renderer.render((text, result) => {
+					console.log(`Code scanned = ${decodedText}`, decodedResult);
+				});
+			},
+			stop: () => {
+				renderer.clear();
+				page.scanner.enabled = false
+			},
+		};
+	})(),
+});
+
+db.auth.onAuthStateChange((event, session) => {
+	page.signed_in = (session != null);
+});
+</script>
+</body>
+</html>
