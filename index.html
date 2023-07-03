@@ -8,51 +8,119 @@
 		integrity="sha384-X38yfunGUhNzHpBaEBsWLO+A0HDYOQi8ufWDkZ0k9e0eXz/tH3II7uKZ9msv++Ls">
 	<title>Viva Inventory</title>
 <style>
-form label { display: block; }
-form label strong { display: inline-block; width: 10em; text-align: right; }
+.sign-in { font-size: 300%; position: fixed; top: calc(50vh - 50px); right: calc(50vw - 100px); }
+
+.home { display: flex; flex-direction: column; align-items: center; }
+.home button { font-size: 300%; margin: 20px; width: 30%; }
+
+.pure-form label { display: block; }
+.pure-form label strong { display: inline-block; width: 10em; text-align: right; }
+
+.donation-type-fields { background-color: #eee; }
 </style>
 </head>
 <body>
-<div>
-	<button !.signed_in? @click=".sign_in">Login</button>
-</div>
+<button
+	!.signed_in? @click=".sign_in" class="sign-in pure-button pure-button-primary"
+>Login</button>
+
 <div .signed_in?>
 	<div>
 		<button @click=".go_home">home</button>
 		<button @click=".sign_out">Log out</button>
 	</div>
-	<div .show_home?>
-		<button>New Donation</button>
-		<button @click="add_bike">Add bike</button>
-		<input type="text" placeholder="Find bike...">
-		<button>Browse</button>
+
+	<div .show_home? class="home">
+		<input type="search" placeholder="Search...">
+		<button @click="add_donation" class="pure-button pure-button-primary">New Donation</button>
+		<button @click="add_bike" class="pure-button pure-button-primary">Add bike</button>
+		<button @click="add_bike_part" class="pure-button pure-button-primary">Add bike part</button>
+		<button @click="add_contact" class="pure-button pure-button-primary">New Contact</button>
 	</div>
 
-	<form .new_bike :show-if="." class="pure-form pure-form-aligned">
-		<h2>New bike</h2>
-		<label>
-			<strong>Serial number:</strong>
-			<input .serial_number type="text">
-			<button @click="$.scanner.start">scan</button>
-		</label>
-		<label><strong>Make/model:</strong> <input .make_model type="text"></label>
-		<label><strong>Wheel size:</strong> <input .wheel_size type="text"></label>
-		<label><strong>Status:</strong>
-			<select .status>
-				<option>To scrap</option>
-				<option>To strip</option>
-				<option>To repair</option>
+	<div .new_donation :show-if="." class="pure-form pure-form-aligned">
+		<h1>New donation</h1>
+		<t:contact-fields .contact></t:contact-fields>
+		<label><strong>Event:</strong> <input .event type="text"></label>
+		<label><strong>Type:</strong>
+			<select .type @change="$.change_donation_type">
+				<option>Bike</option>
+				<option>Part</option>
+				<option>Cash</option>
 			</select>
 		</label>
+		<div class="donation-type-fields">
+			<t:bike-fields .new_bike :show-if=".""></t:bike-fields>
+			<t:bike-part-fields .new_bike_part :show-if=".""></t:bike-part-fields>
+			<label .is_cash_donation?>
+				<strong>Dollar amount:</strong> <input .amount type="number">
+			</label>
+		</div>
+		<label><strong>Notes:</strong> <textarea .notes type="text"></textarea></label>
+		<button @click="$.save_donation">Save donation</button>
+	</div>
+
+	<div .new_bike :show-if="." :template="new-bike" class="pure-form pure-form-aligned">
+		<h1>New bike</h1>
+		<t:bike-fields></t:bike-fields>
 		<button @click="$.save_bike">Save bike</button>
-	</form>
+	</div>
+
+	<div .new_bike_part :show-if="." :template="new-bike-part" class="pure-form pure-form-aligned">
+		<h1>New bike part</h1>
+		<t:bike-part-fields></t:bike-part-fields>
+		<button @click="$.save_bike_part">Save bike part</button>
+	</div>
+
+	<div .new_contact :show-if="." :template="new-contact" class="pure-form pure-form-aligned">
+		<h1>New contact</h1>
+		<t:contact-fields></t:contact-fields>
+		<label><strong>Notes:</strong> <textarea .notes type="text"></textarea></label>
+		<button @click="$.save_contact">Save contact</button>
+	</div>
 
 	<div .scanner :show-if=".enabled">
 		<button @click=".stop">Close</button>
 		<div id="qr-reader" style="width: 600px"></div>
 	</div>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+
+<vivy:template name="contact-fields">
+	<label><strong>Donor:</strong> <input .name type="text"></label>
+	<label><strong>Phone:</strong> <input .phone type="tel"></label>
+	<label><strong>Email:</strong> <input .email type="email"></label>
+</vivy:template>
+
+<vivy:template name="bike-fields">
+	<label>
+		<strong>Serial number:</strong>
+		<input .serial_number type="text">
+		<button @click="$.scanner.start">scan</button>
+	</label>
+	<label><strong>Make/model:</strong> <input .make_model type="text"></label>
+	<label><strong>Wheel size:</strong> <input .wheel_size type="text"></label>
+	<label><strong>Status:</strong>
+		<select .status>
+			<option>To scrap</option>
+			<option>To strip</option>
+			<option>To repair</option>
+		</select>
+	</label>
+	<label><strong>Bike description:</strong> <input .description type="text"></label>
+</vivy:template>
+
+<vivy:template name="bike-part-fields">
+	<label><strong>Name:</strong> <input .name type="text"></label>
+	<label><strong>Dollar value:</strong> <input .value type="number"></label>
+	<label><strong>Condition:</strong>
+		<select .status>
+			<option>To scrap</option>
+			<option>To repair</option>
+		</select>
+	</label>
+</vivy:template>
+
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="http://localhost:8001/vivy.js"></script>
 <script>
@@ -67,8 +135,9 @@ const page = vivy(document.body, {
 
 	go_home: () => {
 		page.show_home = true;
-		page.new_bike = null;
+		page.new_contact = page.new_bike_part = page.new_bike = page.new_donation = null;
 	},
+
 	sign_in: async () => {
 		const { data, error } = await db.auth.signInWithOAuth({ provider: "google" });
 		if (error) return console.error(error);
@@ -77,28 +146,80 @@ const page = vivy(document.body, {
 		const { error } = await db.auth.signOut();
 		if (error) return console.error(error);
 	},
+
+	add_donation: () => {
+		page.new_donation = { contact: {} };
+		page.show_home = false;
+	},
+	change_donation_type: (_, donation) => {
+		donation.is_cash_donation = false;
+		donation.new_bike = donation.new_bike_part = null;
+
+		if(donation.type == "Bike") {
+			donation.new_bike = {};
+		} else if(donation.type == "Part") {
+			donation.new_bike_part = {};
+		} else if(donation.type == "Cash") {
+			donation.amount = 0;
+			donation.is_cash_donation = true;
+		}
+	},
+	save_donation: (_, new_donation) => {
+		console.log(new_donation.toJSON());
+		// const { data, error } = await db.from("donations").insert(page.new_bike);
+		// if (error) return console.error(error);
+
+		page.go_home();
+	},
+
 	add_bike: () => {
 		page.new_bike = {};
 		page.show_home = false;
 	},
-	save_bike: async () => {
-		console.log(page.new_bike.toJSON());
+	save_bike: async (_, new_bike) => {
+		console.log(new_bike.toJSON());
 		// const { data, error } = await db.from("bikes").insert(page.new_bike);
 		// if (error) return console.error(error);
 
 		page.new_bike = null;
 	},
+
+	add_bike_part: () => {
+		page.new_bike_part = {};
+		page.show_home = false;
+	},
+	save_bike_part: (_, new_bike_part) => {
+		console.log(new_bike_part.toJSON());
+		// const { data, error } = await db.from("bike_parts").insert(page.new_bike_part);
+		// if (error) return console.error(error);
+
+		page.new_bike_part = null;
+	},
+
+	add_contact: () => {
+		page.new_contact = {};
+		page.show_home = false;
+	},
+	save_contact: (_, new_contact) => {
+		console.log(new_contact.toJSON());
+		// const { data, error } = await db.from("contacts").insert(page.new_contact);
+		// if (error) return console.error(error);
+
+		page.new_contact = null;
+	},
+
 	scanner: (() => {
 		let renderer;
 
 		return {
 			enabled: false,
-			start: () => {
+			start: (_, new_bike) => {
 				page.scanner.enabled = true;
 
 				renderer = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: 250 });
 				renderer.render((text, result) => {
-					console.log(`Code scanned = ${decodedText}`, decodedResult);
+					console.log(`Code scanned = ${text}`, result);
+					new_bike.serial_number = text;
 				});
 			},
 			stop: () => {
