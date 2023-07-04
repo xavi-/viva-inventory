@@ -125,6 +125,10 @@
 		</select>
 	</label>
 	<label><strong>Bike description:</strong> <input .description type="text"></label>
+	<label>
+		<strong>Add picture: </strong>
+		<input .pictures type="file" accept="image/*;capture=camera" multiple>
+	</label>
 </vivy:template>
 
 <vivy:template name="bike-part-fields">
@@ -137,6 +141,10 @@
 			<option>To keep</option>
 		</select>
 	</label>
+	<label>
+		<strong>Add picture: </strong>
+		<input .pictures type="file" accept="image/*;capture=camera" multiple>
+	</label>
 </vivy:template>
 
 <script async src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
@@ -147,6 +155,29 @@ const db = supabase.createClient(
 	"https://sigezbqbtdhuftmkzyys.supabase.co",
 	"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpZ2V6YnFidGRodWZ0bWt6eXlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODc1NzI0NTcsImV4cCI6MjAwMzE0ODQ1N30.102HwkvuMQLRVcWY2sI8kXwHQemxaZW5GxAIYbHScF4"
 );
+
+async function uploadPictures(pictures, folder, prefix) {
+	const uploads = pictures.map(pic => {
+		const rnd = (Math.PI * Math.random()).toString(36).substr(3);
+		const name = `${prefix}-${rnd}-${pic.name}`;
+		return db.storage.from("inventory-images").upload(`bike-parts/${name}`, pic);
+	});
+	const results = await Promise.all(uploads);
+
+	return results.map(r => r.data.path);
+}
+
+async function saveBikePart(part) {
+	return db.from("bike_parts").insert({
+		...part, pictures: uploadPictures(part.pictures, "bike-parts", part.name)
+	});
+}
+
+async function saveBike(bike) {
+	return db.from("bikes").insert({
+		...bike, pictures: uploadPictures(bike.pictures, "bike", part.make_model)
+	});
+}
 
 const page = vivy(document.body, {
 	signed_in: false,
@@ -200,14 +231,8 @@ const page = vivy(document.body, {
 				}
 			})
 		];
-		dbRequests.push(new_bike
-			? db.from("bikes").insert(new_bike).select("id")
-			: Promise.resolve({})
-		);
-		dbRequests.push(new_bike_part
-			? db.from("bike_parts").insert(new_bike_part).select("id")
-			: Promise.resolve({})
-		);
+		dbRequests.push(new_bike ? saveBike(new_bike) : Promise.resolve({}));
+		dbRequests.push(new_bike_part ? saveBikePart(new_bike_part) : Promise.resolve({}));
 
 		const [ contactRes, bikeRes, bikePartRes] = await Promise.all(dbRequests);
 
@@ -230,7 +255,7 @@ const page = vivy(document.body, {
 		page.show_home = false;
 	},
 	save_bike: async (_, new_bike) => {
-		const { data, error } = await db.from("bikes").insert(page.new_bike);
+		const { data, error } = await saveBike(new_bike);
 		if (error) return console.error(error);
 
 		page.go_home();
@@ -241,7 +266,7 @@ const page = vivy(document.body, {
 		page.show_home = false;
 	},
 	save_bike_part: async (_, new_bike_part) => {
-		const { data, error } = await db.from("bike_parts").insert(page.new_bike_part);
+		const { data, error } = await saveBikePart(new_bike_part);
 		if (error) return console.error(error);
 
 		page.go_home();
