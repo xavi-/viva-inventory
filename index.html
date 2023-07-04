@@ -8,15 +8,25 @@
 		integrity="sha384-X38yfunGUhNzHpBaEBsWLO+A0HDYOQi8ufWDkZ0k9e0eXz/tH3II7uKZ9msv++Ls">
 	<title>Viva Inventory</title>
 <style>
-.sign-in { font-size: 300%; position: fixed; top: calc(50vh - 50px); right: calc(50vw - 100px); }
+.sign-in { font-size: 300%; position: fixed; top: calc(50vh - 75px); right: calc(50vw - 110px); }
+
+.top-bar { padding: 5px; margin-bottom: 10px; background-color: #efefef; }
+.top-bar::after { content: ""; display: table; clear: both; }
+.go-home { float: left; }
+.sign-out { float: right; }
 
 .home { display: flex; flex-direction: column; align-items: center; }
-.home button { font-size: 300%; margin: 20px; width: 30%; }
+.home button { font-size: 250%; margin: 10px; width: 350px; }
+.home input { width: 350px; font-size: 175%; margin: 5px 10px; }
 
-.pure-form label { display: block; }
-.pure-form label strong { display: inline-block; width: 10em; text-align: right; }
+.pure-form { padding: 0 15px; }
+.pure-form label { display: block; margin: 15px 0; }
+.pure-form label strong { display: inline-block; text-align: right; }
+.pure-form label textarea { display: block; width: 100%; }
+.pure-form label input, .pure-form label select { width: 100%; }
+.pure-form button { width: 100%; font-size: 125%; }
 
-.donation-type-fields { background-color: #eee; }
+.donation-type-fields { background-color: #efefef; margin: 0 -15px; padding: 1px 15px; }
 </style>
 </head>
 <body>
@@ -25,9 +35,9 @@
 >Login</button>
 
 <div .signed_in?>
-	<div>
-		<button @click=".go_home">home</button>
-		<button @click=".sign_out">Log out</button>
+	<div class="top-bar">
+		<button @click=".go_home" class="go-home pure-button pure-button-active">home</button>
+		<button @click=".sign_out" class="sign-out pure-button pure-button-active">Log out</button>
 	</div>
 
 	<div .show_home? class="home">
@@ -57,26 +67,26 @@
 			</label>
 		</div>
 		<label><strong>Notes:</strong> <textarea .notes type="text"></textarea></label>
-		<button @click="$.save_donation">Save donation</button>
+		<button @click="$.save_donation" class="pure-button pure-button-primary">Save donation</button>
 	</div>
 
 	<div .new_bike :show-if="." :template="new-bike" class="pure-form pure-form-aligned">
 		<h1>New bike</h1>
 		<t:bike-fields></t:bike-fields>
-		<button @click="$.save_bike">Save bike</button>
+		<button @click="$.save_bike" class="pure-button pure-button-primary">Save bike</button>
 	</div>
 
 	<div .new_bike_part :show-if="." :template="new-bike-part" class="pure-form pure-form-aligned">
 		<h1>New bike part</h1>
 		<t:bike-part-fields></t:bike-part-fields>
-		<button @click="$.save_bike_part">Save bike part</button>
+		<button @click="$.save_bike_part" class="pure-button pure-button-primary">Save bike part</button>
 	</div>
 
 	<div .new_contact :show-if="." :template="new-contact" class="pure-form pure-form-aligned">
 		<h1>New contact</h1>
 		<t:contact-fields></t:contact-fields>
 		<label><strong>Notes:</strong> <textarea .notes type="text"></textarea></label>
-		<button @click="$.save_contact">Save contact</button>
+		<button @click="$.save_contact" class="pure-button pure-button-primary">Save contact</button>
 	</div>
 
 	<div .scanner :show-if=".enabled">
