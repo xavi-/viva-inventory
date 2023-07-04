@@ -96,7 +96,7 @@
 </div>
 
 <vivy:template name="contact-fields">
-	<label><strong>Donor:</strong> <input .name type="text"></label>
+	<label><strong>Donor:</strong> <input .donor type="text" required></label>
 	<label><strong>Phone:</strong> <input .phone type="tel"></label>
 	<label><strong>Email:</strong> <input .email type="email"></label>
 </vivy:template>
@@ -104,8 +104,8 @@
 <vivy:template name="bike-fields">
 	<label>
 		<strong>Serial number:</strong>
-		<input .serial_number type="text">
-		<button @click="$.scanner.start">scan</button>
+		<input .serial_number type="text" required>
+		<button @click="$.scanner.start" class="pure-button">scan</button>
 	</label>
 	<label><strong>Make/model:</strong> <input .make_model type="text"></label>
 	<label><strong>Wheel size:</strong> <input .wheel_size type="text"></label>
@@ -120,8 +120,8 @@
 </vivy:template>
 
 <vivy:template name="bike-part-fields">
-	<label><strong>Name:</strong> <input .name type="text"></label>
-	<label><strong>Dollar value:</strong> <input .value type="number"></label>
+	<label><strong>Name:</strong> <input .name type="text" required></label>
+	<label><strong>Dollar value:</strong> <input .dollar_value type="number"></label>
 	<label><strong>Condition:</strong>
 		<select .status>
 			<option>To scrap</option>
@@ -174,10 +174,44 @@ const page = vivy(document.body, {
 			donation.is_cash_donation = true;
 		}
 	},
-	save_donation: (_, new_donation) => {
-		console.log(new_donation.toJSON());
-		// const { data, error } = await db.from("donations").insert(page.new_bike);
-		// if (error) return console.error(error);
+	save_donation: async (_, new_donation) => {
+		const { contact, new_bike, new_bike_part } = new_donation;
+
+		const dbRequests = [
+			db.from("contacts")
+				.select("id")
+				.or(`donor.eq.${contact.donor},email.eq.${contact.email},phone.eq.${contact.phone}`)
+			.then(({ data, error }) => {
+				if(error) { return { error }; }
+
+				if(data.length > 0) {
+					return { data: data[0] };
+				} else {
+					return db.from("contacts").insert(contact);
+				}
+			})
+		];
+		dbRequests.push(new_bike
+			? db.from("bikes").insert(new_bike).select("id")
+			: Promise.resolve({})
+		);
+		dbRequests.push(new_bike_part
+			? db.from("bike_parts").insert(new_bike_part).select("id")
+			: Promise.resolve({})
+		);
+
+		const [ contactRes, bikeRes, bikePartRes] = await Promise.all(dbRequests);
+
+		const donation = {
+			event: new_donation.event,
+			notes: new_donation.notes,
+			cash: new_donation.amount,
+			contact: contactRes.data.id,
+			bike: bikeRes.data.id,
+			bike_part: bikePartRes.data.id,
+		}
+		const { data, error } = await db.from("donations").insert(donation);
+		if (error) return console.error(error);
 
 		page.go_home();
 	},
@@ -187,35 +221,32 @@ const page = vivy(document.body, {
 		page.show_home = false;
 	},
 	save_bike: async (_, new_bike) => {
-		console.log(new_bike.toJSON());
-		// const { data, error } = await db.from("bikes").insert(page.new_bike);
-		// if (error) return console.error(error);
+		const { data, error } = await db.from("bikes").insert(page.new_bike);
+		if (error) return console.error(error);
 
-		page.new_bike = null;
+		page.go_home();
 	},
 
 	add_bike_part: () => {
 		page.new_bike_part = {};
 		page.show_home = false;
 	},
-	save_bike_part: (_, new_bike_part) => {
-		console.log(new_bike_part.toJSON());
-		// const { data, error } = await db.from("bike_parts").insert(page.new_bike_part);
-		// if (error) return console.error(error);
+	save_bike_part: async (_, new_bike_part) => {
+		const { data, error } = await db.from("bike_parts").insert(page.new_bike_part);
+		if (error) return console.error(error);
 
-		page.new_bike_part = null;
+		page.go_home();
 	},
 
 	add_contact: () => {
 		page.new_contact = {};
 		page.show_home = false;
 	},
-	save_contact: (_, new_contact) => {
-		console.log(new_contact.toJSON());
-		// const { data, error } = await db.from("contacts").insert(page.new_contact);
-		// if (error) return console.error(error);
+	save_contact: async (_, new_contact) => {
+		const { data, error } = await db.from("contacts").insert(page.new_contact);
+		if (error) return console.error(error);
 
-		page.new_contact = null;
+		page.go_home();
 	},
 
 	scanner: (() => {
