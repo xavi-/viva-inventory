@@ -24,9 +24,16 @@
 .pure-form label strong { display: inline-block; text-align: right; }
 .pure-form label textarea { display: block; width: 100%; }
 .pure-form label input, .pure-form label select { width: 100%; }
+.pure-form label input[type="file"] { font-size: 110%; padding-top: 10px; }
 .pure-form button { width: 100%; font-size: 125%; }
+.pure-form .scan { width: auto; }
 
 .donation-type-fields { background-color: #efefef; margin: 0 -15px; padding: 1px 15px; }
+
+.scanner { background: white; position: fixed; top: 0; left: 0; bottom: 0; right: 0; }
+.scanner .close { position: absolute; top: 5px; right: 5px; z-index: 9999; font-size: 150%; }
+#qr-reader { height: calc(100% - 2px); }
+#qr-reader__header_message { margin-top: 40px !important; }
 </style>
 </head>
 <body>
@@ -89,9 +96,9 @@
 		<button @click="$.save_contact" class="pure-button pure-button-primary">Save contact</button>
 	</div>
 
-	<div .scanner :show-if=".enabled">
-		<button @click=".stop">Close</button>
-		<div id="qr-reader" style="width: 600px"></div>
+	<div .scanner :show-if=".enabled" class="scanner">
+		<button @click=".stop" class="close">Close</button>
+		<div id="qr-reader"></div>
 	</div>
 </div>
 
@@ -105,7 +112,7 @@
 	<label>
 		<strong>Serial number:</strong>
 		<input .serial_number type="text" required>
-		<button @click="$.scanner.start" class="pure-button">scan</button>
+		<button @click="$.scanner.start" class="scan pure-button">scan</button>
 	</label>
 	<label><strong>Make/model:</strong> <input .make_model type="text"></label>
 	<label><strong>Wheel size:</strong> <input .wheel_size type="text"></label>
@@ -259,7 +266,9 @@ const page = vivy(document.body, {
 			start: (_, new_bike) => {
 				page.scanner.enabled = true;
 
-				renderer = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: 250 });
+				renderer = new Html5QrcodeScanner("qr-reader", {
+					fps: 10, qrbox: 250, aspectRatio: 0.56
+				});
 				renderer.render((text, result) => {
 					console.log(`Code scanned = ${text}`, result);
 					new_bike.serial_number = text;
