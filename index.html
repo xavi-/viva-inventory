@@ -285,24 +285,25 @@ const page = vivy(document.body, {
 	},
 
 	scanner: (() => {
-		let renderer;
+		let renderer = null;
 
 		return {
 			enabled: false,
 			start: (_, new_bike) => {
 				page.scanner.enabled = true;
 
-				renderer = new Html5QrcodeScanner("qr-reader", {
+				renderer = renderer ?? new Html5QrcodeScanner("qr-reader", {
 					fps: 10, qrbox: 250, aspectRatio: 0.56
 				});
 				renderer.render((text, result) => {
 					console.log(`Code scanned = ${text}`, result);
 					new_bike.serial_number = text;
+					page.scanner.stop();
 				});
 			},
 			stop: () => {
 				renderer.clear();
-				page.scanner.enabled = false
+				setTimeout(() => page.scanner.enabled = false, 10);
 			},
 		};
 	})(),
