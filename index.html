@@ -177,26 +177,24 @@ const db = supabase.createClient(
 );
 
 async function uploadPictures(pictures, folder, prefix) {
-	const uploads = pictures.map(pic => {
+	const uploads = pictures?.map(pic => {
 		const rnd = (Math.PI * Math.random()).toString(36).substr(3);
 		const name = `${prefix}-${rnd}-${pic.name}`;
-		return db.storage.from("inventory-images").upload(`bike-parts/${name}`, pic);
-	});
+		return db.storage.from("inventory-images").upload(`${folder}/${name}`, pic);
+	}) ?? [];
 	const results = await Promise.all(uploads);
 
 	return results.map(r => r.data.path);
 }
 
 async function saveBikePart(part) {
-	return db.from("bike_parts").insert({
-		...part, pictures: uploadPictures(part.pictures, "bike-parts", part.name)
-	});
+	const pictures = await uploadPictures(part.pictures, "bike-parts", part.name);
+	return db.from("bike_parts").insert({ ...part, pictures });
 }
 
 async function saveBike(bike) {
-	return db.from("bikes").insert({
-		...bike, pictures: uploadPictures(bike.pictures, "bike", part.make_model)
-	});
+	const pictures = await uploadPictures(bike.pictures, "bikes", bike.make_model + "-" + bike.serial_number);
+	return db.from("bikes").insert({ ...bike, pictures });
 }
 
 const page = vivy(document.body, {
@@ -247,7 +245,7 @@ const page = vivy(document.body, {
 				if(data.length > 0) {
 					return { data: data[0] };
 				} else {
-					return db.from("contacts").insert(contact);
+					return db.from("contacts").insert(contact).select("id");
 				}
 			})
 		];
@@ -261,9 +259,9 @@ const page = vivy(document.body, {
 			notes: new_donation.notes,
 			cash: new_donation.amount,
 			contact: contactRes.data.id,
-			bike: bikeRes.data.id,
-			bike_part: bikePartRes.data.id,
-		}
+			bike: bikeRes.data?.id,
+			bike_part: bikePartRes.data?.id,
+		};
 		const { data, error } = await db.from("donations").insert(donation);
 		if (error) return console.error(error);
 
