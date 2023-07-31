@@ -230,7 +230,7 @@ const page = vivy(document.body, {
 		const dbRequests = [
 			db.from("contacts")
 				.select("id")
-				.or(`donor.eq.${contact.donor},email.eq.${contact.email},phone.eq.${contact.phone}`)
+				.or(`donor.eq."${contact.donor}",email.eq."${contact.email}",phone.eq."${contact.phone}"`)
 			.then(({ data, error }) => {
 				if(error) { return { error }; }
 
