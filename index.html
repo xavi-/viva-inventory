@@ -32,7 +32,16 @@
 .donation-type-fields { background-color: #efefef; margin: 0 -15px; padding: 1px 15px; }
 
 .scanner { background: white; position: fixed; top: 0; left: 0; bottom: 0; right: 0; }
-.scanner .close { position: absolute; top: 5px; right: 5px; z-index: 9999; font-size: 150%; }
+.scanner .close {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	z-index: 9999;
+	font-size: 150%;
+	vertical-align: middle;
+	line-height: 100%;
+	height: 40px;
+}
 #qr-reader { height: calc(100% - 2px); }
 #qr-reader__header_message { margin-top: 40px !important; }
 </style>
@@ -98,7 +107,7 @@
 	</div>
 
 	<div .scanner :show-if=".enabled" class="scanner">
-		<button @click=".stop" class="close">Close</button>
+		<button @click=".stop" class="close" title="close">✖️</button>
 		<div id="qr-reader"></div>
 	</div>
 </div>
