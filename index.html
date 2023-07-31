@@ -98,12 +98,14 @@
 	<div .new_bike :show-if="." :template="new-bike" class="pure-form pure-form-aligned">
 		<h1>New bike</h1>
 		<t:bike-fields></t:bike-fields>
+		<label><strong>Notes:</strong> <textarea .notes type="text"></textarea></label>
 		<button @click="$.save_bike" class="pure-button pure-button-primary">Save bike</button>
 	</div>
 
 	<div .new_bike_part :show-if="." :template="new-bike-part" class="pure-form pure-form-aligned">
 		<h1>New bike part</h1>
 		<t:bike-part-fields></t:bike-part-fields>
+		<label><strong>Notes:</strong> <textarea .notes type="text"></textarea></label>
 		<button @click="$.save_bike_part" class="pure-button pure-button-primary">Save bike part</button>
 	</div>
 
