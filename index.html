@@ -18,7 +18,15 @@
 
 .home { display: flex; flex-direction: column; align-items: center; }
 .home button { font-size: 250%; margin: 10px; width: 350px; }
-.home input { width: 350px; font-size: 175%; margin: 5px 10px; }
+.home input[type=search] {
+	width: 350px;
+	padding: 0.2em 0.4em;
+	margin-bottom: 5px;
+	font-size: 175%;
+	border: 1px solid #ccc;
+	box-shadow: inset 0 1px 3px #ddd;
+	border-radius: 4px;
+}
 
 .pure-form { padding: 0 15px; }
 .pure-form label { display: block; margin: 15px 0; }
