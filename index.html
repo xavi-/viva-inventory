@@ -84,7 +84,7 @@
 	</div>
 
 	<div .show_home? class="home">
-		<input type="search" placeholder="Search...">
+		<input @keyup="$.inventory.key_press_search" $.inventory.search_query type="search" placeholder="Search...">
 		<button @click="add_donation" class="pure-button pure-button-primary">New Donation</button>
 		<button @click="add_bike" class="pure-button pure-button-primary">Add bike</button>
 		<button @click="add_bike_part" class="pure-button pure-button-primary">Add bike part</button>
@@ -156,7 +156,7 @@
 			<label><input type="checkbox" .include_donations> Donations</label>
 		</div>
 		<div class="search pure-form">
-			<input .search_query type="search" placeholder="Search...">
+			<input @keyup=".key_press_search" .search_query type="search" placeholder="Search...">
 			<button @click="search" class="pure-button pure-button-primary" title="search">🔍</button>
 		</div>
 		<ol class="results">
@@ -496,11 +496,22 @@ const page = vivy(document.body, {
 				page.inventory.show = true;
 				page.show_home = false;
 
-				page.inventory.results = await search();
+				page.inventory.results = await search(page.inventory.search_query);
 			},
 
 			search: async (_, inventory) => {
 				page.inventory.results = await search(inventory.search_query);
+
+				page.inventory.show = true;
+			},
+
+			key_press_search: (event) => {
+				event.preventDefault();
+
+				if(event.keyCode === 13) {
+					page.inventory.search(event, page.inventory);
+					page.show_home = false;
+				}
 			},
 
 			include_changed: async (_, inventory) => {
