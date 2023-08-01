@@ -39,6 +39,24 @@
 
 .donation-type-fields { background-color: #efefef; margin: 0 -15px; padding: 1px 15px; }
 
+.inventory { padding: 0 15px; }
+.inventory label { display: inline-block; margin: 0; padding: 0 5px 15px 0; }
+.inventory label input { width: auto; }
+.inventory .search-options { display: flex; justify-content: space-between; }
+.inventory .search { display: flex; margin-bottom: 15px; padding: 0; }
+.inventory .search .pure-button { width: auto; font-size: 100%; padding-bottom: 5px; padding-top: 5px }
+.inventory .search input { display: inline-block; flex: 1; margin: 0; margin-right: 5px; }
+.inventory .results { list-style: none; padding: 0; }
+.inventory .result {
+	margin: 0 0 10px 0;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+.inventory .result .line { display: flex; margin-bottom: 3px; }
+.inventory .result .line > *:first-child { flex: 1; }
+.inventory .result .header { margin-bottom: 5px; }
+
 .scanner { background: white; position: fixed; top: 0; left: 0; bottom: 0; right: 0; }
 .scanner .close {
 	position: absolute;
@@ -71,6 +89,7 @@
 		<button @click="add_bike" class="pure-button pure-button-primary">Add bike</button>
 		<button @click="add_bike_part" class="pure-button pure-button-primary">Add bike part</button>
 		<button @click="add_contact" class="pure-button pure-button-primary">New Contact</button>
+		<button @click="inventory.open" class="pure-button pure-button-primary">Inventory</button>
 	</div>
 
 	<div .new_donation :show-if="." class="pure-form pure-form-aligned">
@@ -92,28 +111,108 @@
 			</label>
 		</div>
 		<label><strong>Notes:</strong> <textarea .notes type="text"></textarea></label>
-		<button @click="$.save_donation" class="pure-button pure-button-primary">Save donation</button>
+		<button @click="$.save_donation" class="pure-button pure-button-primary">
+			<span !.id?>Save donation</span>
+			<span .id?>Update donation</span>
+		</button>
 	</div>
 
 	<div .new_bike :show-if="." :template="new-bike" class="pure-form pure-form-aligned">
 		<h1>New bike</h1>
 		<t:bike-fields></t:bike-fields>
 		<label><strong>Notes:</strong> <textarea .notes type="text"></textarea></label>
-		<button @click="$.save_bike" class="pure-button pure-button-primary">Save bike</button>
+		<button @click="$.save_bike" class="pure-button pure-button-primary">
+			<span !.id?>Save bike</span>
+			<span .id?>Update bike</span>
+		</button>
 	</div>
 
 	<div .new_bike_part :show-if="." :template="new-bike-part" class="pure-form pure-form-aligned">
 		<h1>New bike part</h1>
 		<t:bike-part-fields></t:bike-part-fields>
 		<label><strong>Notes:</strong> <textarea .notes type="text"></textarea></label>
-		<button @click="$.save_bike_part" class="pure-button pure-button-primary">Save bike part</button>
+		<button @click="$.save_bike_part" class="pure-button pure-button-primary">
+			<span !.id?>Save bike part</span>
+			<span .id?>Update bike part</span>
+		</button>
 	</div>
 
 	<div .new_contact :show-if="." :template="new-contact" class="pure-form pure-form-aligned">
 		<h1>New contact</h1>
 		<t:contact-fields></t:contact-fields>
 		<label><strong>Notes:</strong> <textarea .notes type="text"></textarea></label>
-		<button @click="$.save_contact" class="pure-button pure-button-primary">Save contact</button>
+		<button @click="$.save_contact" class="pure-button pure-button-primary">
+			<span !.id?>Save contact</span>
+			<span .id?>Update contact</span>
+		</button>
+	</div>
+
+	<div .inventory :show-if=".show" class="inventory">
+		<h1>Inventory</h1>
+		<div @change=".include_changed" class="search-options">
+			<label><input type="checkbox" .include_bikes> Bikes</label>
+			<label><input type="checkbox" .include_bike_parts> Parts</label>
+			<label><input type="checkbox" .include_contacts> Contacts</label>
+			<label><input type="checkbox" .include_donations> Donations</label>
+		</div>
+		<div class="search pure-form">
+			<input .search_query type="search" placeholder="Search...">
+			<button @click="search" class="pure-button pure-button-primary" title="search">🔍</button>
+		</div>
+		<ol class="results">
+			<li .results[] class="result" data-id.=".id"  @click="$.inventory.edit">
+				<div .bike? class="bike">
+					<div class="header line">
+						<strong>Bike</strong>
+						<span .pretty_date></span>
+					</div>
+					<div .bike class="line">
+						<span .serial_number class="serial"></span>
+						<span .status class="status"></span>
+					</div>
+					<div .bike class="line">
+						<span>Model: <span .make_model></span></span>
+						<span>🛞: <span .wheel_size></span></span>
+					</div>
+					<div .bike.description></div>
+					<div .bike.notes></div>
+				</div>
+				<div .part? class="bike-part">
+					<div class="header line">
+						<strong>Bike part</strong>
+						<span .pretty_date></span>
+					</div>
+					<div .part class="line">
+						<span .name></span>
+						<span .dollar_value></span>
+					</div>
+					<div .part.notes></div>
+				</div>
+				<div .contact? class="contact">
+					<div class="header line">
+						<strong>Contact</strong>
+						<span .pretty_date></span>
+					</div>
+					<div .contact.donor></div>
+					<div .contact class="line">
+						<span><a .email href="`mailto:${.}`"></a></span>
+						<span><a .phone href="`tel:${.}`"></a></span>
+					</div>
+					<div .contact.notes></div>
+				</div>
+				<div .donation? class="donation">
+					<div class="header line">
+						<strong>Donation</strong>
+						<span .pretty_date></span>
+					</div>
+					<span .donation.donor></span>
+					<span .donation.event></span>
+					<span .donation.type></span>
+					<span .donation.amount></span>
+					<div .donation.notes></div>
+				</div>
+			</li>
+		</ol>
 	</div>
 
 	<div .scanner :show-if=".enabled" class="scanner">
@@ -189,12 +288,12 @@ async function uploadPictures(pictures, folder, prefix) {
 
 async function saveBikePart(part) {
 	const pictures = await uploadPictures(part.pictures, "bike-parts", part.name);
-	return db.from("bike_parts").insert({ ...part, pictures });
+	return db.from("bike_parts").upsert({ ...part, pictures });
 }
 
 async function saveBike(bike) {
 	const pictures = await uploadPictures(bike.pictures, "bikes", bike.make_model + "-" + bike.serial_number);
-	return db.from("bikes").insert({ ...bike, pictures });
+	return db.from("bikes").upsert({ ...bike, pictures });
 }
 
 const page = vivy(document.body, {
@@ -203,6 +302,7 @@ const page = vivy(document.body, {
 
 	go_home: () => {
 		page.show_home = true;
+		page.inventory.show = false;
 		page.new_contact = page.new_bike_part = page.new_bike = page.new_donation = null;
 	},
 
@@ -262,7 +362,7 @@ const page = vivy(document.body, {
 			bike: bikeRes.data?.id,
 			bike_part: bikePartRes.data?.id,
 		};
-		const { data, error } = await db.from("donations").insert(donation);
+		const { data, error } = await db.from("donations").upsert(donation);
 		if (error) return console.error(error);
 
 		page.go_home();
@@ -295,11 +395,130 @@ const page = vivy(document.body, {
 		page.show_home = false;
 	},
 	save_contact: async (_, new_contact) => {
-		const { data, error } = await db.from("contacts").insert(page.new_contact);
+		const { data, error } = await db.from("contacts").upsert(page.new_contact);
 		if (error) return console.error(error);
 
 		page.go_home();
 	},
+
+	inventory: (() => {
+		const empty = { data: [] };
+		const search = async (query) => {
+			const dbRequests = [];
+
+			const { include_bikes, include_bike_parts, include_contacts, include_donations } =
+				page.inventory
+			;
+
+			if(!include_bikes) { dbRequests.push(Promise.resolve(empty)); }
+			else {
+				let res = db.from("bikes").select("*");
+				if(query) {
+					res = res.or(
+						`make_model.ilike.%${query}%,` +
+						`description.ilike.%${query}%,` +
+						`status.ilike.%${query}%,` +
+						`notes.ilike.%${query}%`
+					);
+				}
+
+				dbRequests.push(res);
+			}
+
+			if(!include_bike_parts) { dbRequests.push(Promise.resolve(empty)); }
+			else {
+				let res = db.from("bike_parts").select("*");
+				if(query) {
+					res = res.or(
+						`name.ilike.%${query}%,` +
+						`status.ilike.%${query}%,` +
+						`notes.ilike.%${query}%`
+					);
+				}
+
+				dbRequests.push(res);
+			}
+			if(!include_contacts) { dbRequests.push(Promise.resolve(empty)); }
+			else {
+				let res = db.from("contacts").select("*");
+				if(query) {
+					res = res.or(
+						`donor.ilike.%${query}%,` +
+						`phone.ilike.%${query}%,` +
+						`email.ilike.%${query}%,` +
+						`notes.ilike.%${query}%`
+					);
+				}
+
+				dbRequests.push(res);
+			}
+			if(!include_donations) { dbRequests.push(Promise.resolve(empty)); }
+			else {
+				let res = db.from("donations").select("*");
+				if(query) {
+					res = res.or(
+						`event.ilike.%${query}%,` +
+						`notes.ilike.%${query}%`
+					);
+				}
+
+				dbRequests.push(res);
+			}
+
+			const [ bikes, parts, contacts, donations ] = await Promise.all(dbRequests);
+
+			const results = [
+				...bikes.data.map(bike => ({ bike: { ...bike }, created_at: bike.created_at })),
+				...parts.data.map(part => ({ part: { ...part }, created_at: part.created_at })),
+				...contacts.data.map(contact => ({ contact: { ...contact }, created_at: contact.created_at })),
+				...donations.data.map(donation => ({ donation: { ...donation }, created_at: donation.created_at })),
+			];
+
+			for(const item of results)
+				item.pretty_date = new Date(item.created_at).toDateString();
+
+			results.sort((a, b) => b.created_at.localeCompare(a.created_at));
+
+			return results;
+		};
+
+		return {
+			show: false,
+
+			include_bikes: true,
+			include_bike_parts: true,
+			include_contacts: true,
+			include_donations: true,
+
+			search_query: "",
+
+			open: async () => {
+				page.inventory.show = true;
+				page.show_home = false;
+
+				page.inventory.results = await search();
+			},
+
+			search: async (_, inventory) => {
+				page.inventory.results = await search(inventory.search_query);
+			},
+
+			include_changed: async (_, inventory) => {
+				page.inventory.results = await search(inventory.search_query);
+			},
+
+			edit: (_, item) => {
+				if(item.contact) page.new_contact = item.contact;
+				else if(item.bike) page.new_bike = item.bike;
+				else if(item.part) page.new_bike_part = item.part;
+				else if(item.donation) page.new_donation = item.donation;
+
+				page.inventory.show = false;
+			},
+
+			results: [],
+		};
+	})(),
 
 	scanner: (() => {
 		let renderer = null;
