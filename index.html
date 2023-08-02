@@ -312,10 +312,18 @@ const db = supabase.createClient(
 async function uploadPictures(pictures, folder, prefix) {
 	const uploads = pictures?.map(pic => {
 		const rnd = (Math.PI * Math.random()).toString(36).substr(3);
-		const name = `${prefix}-${rnd}-${pic.name}`;
+		const key = pic.name
+			.replace(/\s/g, "-")
+			.replace(/(\w|\/|!|-|\.|\*|'|\(|\)| |&|\$|@|=|;|:|\+|,|\?)/, "_")
+			.replace(/[^\x00-\x7F]/g, "x")
+		;
+		const name = `${prefix}-${rnd}-${key}`;
 		return db.storage.from("inventory-images").upload(`${folder}/${name}`, pic);
 	}) ?? [];
 	const results = await Promise.all(uploads);
+	for(const result of results) {
+		if (result.error) { console.error(result.error); return []; }
+	}
 
 	return results.map(r => r.data.path);
 }
@@ -329,14 +337,14 @@ async function getPublicUrls(paths) {
 
 async function saveBikePart({ previews, new_pictures, ...part }) {
 	const uploaded = await uploadPictures(new_pictures, "bike-parts", part.name);
-	const pictures = [...part.pictures, ...uploaded];
+	const pictures = [ ...(part.pictures ?? []), ...uploaded ];
 
 	return db.from("bike_parts").upsert({ ...part, pictures }).select("id");
 }
 
 async function saveBike({ previews, new_pictures, ...bike }) {
 	const uploaded = await uploadPictures(new_pictures, "bikes", bike.make_model + "-" + bike.serial_number);
-	const pictures = [...bike.pictures, ...uploaded];
+	const pictures = [ ...(bike.pictures ?? []), ...uploaded ];
 
 	return db.from("bikes").upsert({ ...bike, pictures }).select("id");
 }
@@ -387,6 +395,14 @@ const page = vivy(document.body, {
 			new_bike: bike.data?.[0],
 			new_bike_part: bike_part.data?.[0],
 		};
+
+		const { new_bike, new_bike_part } = page.new_donation;
+		if(new_bike) {
+			new_bike.previews = { existing: await getPublicUrls(new_bike.pictures) };
+		}
+		if(new_bike_part) {
+			new_bike_part.previews = { existing: await getPublicUrls(new_bike_part.pictures) };
+		}
 	},
 	change_donation_type: (_, donation) => {
 		donation.is_cash_donation = false;
@@ -412,7 +428,7 @@ const page = vivy(document.body, {
 				if(error) { return { error }; }
 
 				if(data.length > 0) {
-					return data;
+					return { data };
 				} else {
 					return db.from("contacts").insert(contact).select("id");
 				}
