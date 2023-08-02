@@ -200,7 +200,8 @@
 					</div>
 					<div .part class="line">
 						<span .name></span>
-						<span .dollar_value></span>
+						<span .status class="status"></span>
+						<span .dollar_value?>&nbsp;$<span .dollar_value></span></span>
 					</div>
 					<div .part.notes></div>
 				</div>
@@ -221,10 +222,11 @@
 						<strong>Donation</strong>
 						<span .pretty_date></span>
 					</div>
-					<span .donation.donor></span>
-					<span .donation.event></span>
-					<span .donation.type></span>
-					<span .donation.amount></span>
+					<div class="line">
+						<span .donation.event></span>
+						<span .donation.type></span>
+						<span .donation.cash?>&nbsp;$<span .donation.cash></span></span>
+					</div>
 					<div .donation.notes></div>
 				</div>
 			</li>
