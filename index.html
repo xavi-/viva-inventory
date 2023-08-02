@@ -109,7 +109,7 @@
 	</div>
 
 	<div .new_donation :show-if="." class="pure-form pure-form-aligned">
-		<h1>New donation</h1>
+		<h1>Donation</h1>
 		<t:contact-fields .contact></t:contact-fields>
 		<label><strong>Event:</strong> <input .event type="text"></label>
 		<label><strong>Type:</strong>
@@ -134,7 +134,7 @@
 	</div>
 
 	<div .new_bike :show-if="." :template="new-bike" class="pure-form pure-form-aligned">
-		<h1>New bike</h1>
+		<h1>Bike</h1>
 		<t:bike-fields></t:bike-fields>
 		<label><strong>Notes:</strong> <textarea .notes type="text"></textarea></label>
 		<button @click="$.save_bike" class="pure-button pure-button-primary">
@@ -144,7 +144,7 @@
 	</div>
 
 	<div .new_bike_part :show-if="." :template="new-bike-part" class="pure-form pure-form-aligned">
-		<h1>New bike part</h1>
+		<h1>Bike part</h1>
 		<t:bike-part-fields></t:bike-part-fields>
 		<label><strong>Notes:</strong> <textarea .notes type="text"></textarea></label>
 		<button @click="$.save_bike_part" class="pure-button pure-button-primary">
@@ -154,7 +154,7 @@
 	</div>
 
 	<div .new_contact :show-if="." :template="new-contact" class="pure-form pure-form-aligned">
-		<h1>New contact</h1>
+		<h1>Contact</h1>
 		<t:contact-fields></t:contact-fields>
 		<label><strong>Notes:</strong> <textarea .notes type="text"></textarea></label>
 		<button @click="$.save_contact" class="pure-button pure-button-primary">
