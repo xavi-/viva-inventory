@@ -288,12 +288,12 @@ async function uploadPictures(pictures, folder, prefix) {
 
 async function saveBikePart(part) {
 	const pictures = await uploadPictures(part.pictures, "bike-parts", part.name);
-	return db.from("bike_parts").upsert({ ...part, pictures });
+	return db.from("bike_parts").upsert({ ...part, pictures }).select("id");
 }
 
 async function saveBike(bike) {
 	const pictures = await uploadPictures(bike.pictures, "bikes", bike.make_model + "-" + bike.serial_number);
-	return db.from("bikes").upsert({ ...bike, pictures });
+	return db.from("bikes").upsert({ ...bike, pictures }).select("id");
 }
 
 const page = vivy(document.body, {
@@ -343,7 +343,7 @@ const page = vivy(document.body, {
 				if(error) { return { error }; }
 
 				if(data.length > 0) {
-					return { data: data[0] };
+					return data;
 				} else {
 					return db.from("contacts").insert(contact).select("id");
 				}
@@ -358,9 +358,9 @@ const page = vivy(document.body, {
 			event: new_donation.event,
 			notes: new_donation.notes,
 			cash: new_donation.amount,
-			contact: contactRes.data.id,
-			bike: bikeRes.data?.id,
-			bike_part: bikePartRes.data?.id,
+			contact: contactRes.data[0].id,
+			bike: bikeRes.data?.[0].id,
+			bike_part: bikePartRes.data?.[0].id,
 		};
 		const { data, error } = await db.from("donations").upsert(donation);
 		if (error) return console.error(error);
