@@ -73,6 +73,19 @@
 
 .image-previews { display: flex; flex-wrap: wrap; justify-content: space-evenly; }
 .image-previews img { width: calc(33% - 2px); margin: 2px 0; outline: 1px solid #ccc; }
+
+.image-zoom {
+	position: fixed;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	background: rgba(0,0,0,0.5);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.image-zoom img { width: 100% }
 </style>
 </head>
 <body>
@@ -218,6 +231,10 @@
 		</ol>
 	</div>
 
+	<div .image_zoom :show-if=".src"  @click=".close" class="image-zoom">
+		<img src.=".src">
+	</div>
+
 	<div .scanner :show-if=".enabled" class="scanner">
 		<button @click=".stop" class="close" title="close">✖️</button>
 		<div id="qr-reader"></div>
@@ -248,14 +265,14 @@
 	</label>
 	<label><strong>Bike description:</strong> <input .description type="text"></label>
 	<div .previews.existing.length? class="image-previews">
-		<img .previews.existing[] src.=".">
+		<img .previews.existing[] src.="." @click="$.image_zoom.open">
 	</div>
 	<label>
 		<strong>Add picture: </strong>
 		<input .new_pictures @change="$.update_previews" type="file" accept="image/*;capture=camera" multiple>
 	</label>
 	<div .previews.to_add.length? class="image-previews">
-		<img .previews.to_add[] src.=".">
+		<img .previews.to_add[] src.="." @click="$.image_zoom.open">
 	</div>
 </vivy:template>
 
@@ -270,14 +287,14 @@
 		</select>
 	</label>
 	<div .previews.existing.length? class="image-previews">
-		<img .previews.existing[] src.=".">
+		<img .previews.existing[] src.="." @click="$.image_zoom.open">
 	</div>
 	<label>
 		<strong>Add picture: </strong>
 		<input .new_pictures @change="$.update_previews" type="file" accept="image/*;capture=camera" multiple>
 	</label>
 	<div .previews.to_add.length? class="image-previews">
-		<img .previews.to_add[] src.=".">
+		<img .previews.to_add[] src.="." @click="$.image_zoom.open">
 	</div>
 </vivy:template>
 
@@ -623,6 +640,12 @@ const page = vivy(document.body, {
 	update_previews: (_, item) => {
 		item.previews ??= {};
 		item.previews.to_add = item.new_pictures.map(file => URL.createObjectURL(file));
+	},
+
+	image_zoom: {
+		src: "",
+		open: (ev) => page.image_zoom.src = ev.target.src,
+		close: () => page.image_zoom.src = "",
 	}
 });
 
