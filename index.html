@@ -329,8 +329,10 @@ async function uploadPictures(pictures, folder, prefix) {
 }
 
 async function getPublicUrls(paths) {
+	if(paths.length <= 0) return [];
+
 	const { data, error } = await db.storage.from("inventory-images").createSignedUrls(paths, 300);
-	if (error) return console.error(error);
+	if (error) { console.error(error); return []; }
 
 	return data.map(d => d.signedUrl);
 }
