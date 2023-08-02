@@ -319,6 +319,30 @@ const page = vivy(document.body, {
 		page.new_donation = { contact: {} };
 		page.show_home = false;
 	},
+	edit_donation: async (donation) => {
+		const promises = [
+			await db.from("contacts").select("*").eq("id", donation.contact),
+			donation.bike ? db.from("bikes").select("*").eq("id", donation.bike) : Promise.resolve({}),
+			donation.bike_part ? db.from("bike_parts").select("*").eq("id", donation.bike_part) : Promise.resolve({}),
+		];
+		const [contact, bike, bike_part] = await Promise.all(promises);
+
+		if(contact.error) return console.error(contact.error);
+		if(bike.error) return console.error(bike.error);
+		if(bike_part.error) return console.error(bike_part.error);
+
+		page.new_donation = {
+			id: donation.id,
+			type: donation.type,
+			event: donation.event,
+			notes: donation.notes,
+			amount: donation.amount,
+			is_cash_donation: (donation.type === "Cash"),
+			contact: contact.data[0],
+			new_bike: bike.data?.[0],
+			new_bike_part: bike_part.data?.[0],
+		};
+	},
 	change_donation_type: (_, donation) => {
 		donation.is_cash_donation = false;
 		donation.new_bike = donation.new_bike_part = null;
@@ -355,6 +379,8 @@ const page = vivy(document.body, {
 		const [ contactRes, bikeRes, bikePartRes] = await Promise.all(dbRequests);
 
 		const donation = {
+			id: new_donation.id,
+			type: new_donation.type,
 			event: new_donation.event,
 			notes: new_donation.notes,
 			cash: new_donation.amount,
@@ -519,10 +545,11 @@ const page = vivy(document.body, {
 			},
 
 			edit: (_, item) => {
+				console.log(item.toJSON());
 				if(item.contact) page.new_contact = item.contact;
 				else if(item.bike) page.new_bike = item.bike;
 				else if(item.part) page.new_bike_part = item.part;
-				else if(item.donation) page.new_donation = item.donation;
+				else if(item.donation) page.edit_donation(item.donation);
 
 				page.inventory.show = false;
 			},
