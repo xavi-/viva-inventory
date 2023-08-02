@@ -70,6 +70,9 @@
 }
 #qr-reader { height: calc(100% - 2px); }
 #qr-reader__header_message { margin-top: 40px !important; }
+
+.image-previews { display: flex; flex-wrap: wrap; justify-content: space-evenly; }
+.image-previews img { width: calc(33% - 2px); margin: 2px 0; outline: 1px solid #ccc; }
 </style>
 </head>
 <body>
@@ -244,10 +247,16 @@
 		</select>
 	</label>
 	<label><strong>Bike description:</strong> <input .description type="text"></label>
+	<div .previews.existing.length? class="image-previews">
+		<img .previews.existing[] src.=".">
+	</div>
 	<label>
 		<strong>Add picture: </strong>
-		<input .pictures type="file" accept="image/*;capture=camera" multiple>
+		<input .new_pictures @change="$.update_previews" type="file" accept="image/*;capture=camera" multiple>
 	</label>
+	<div .previews.to_add.length? class="image-previews">
+		<img .previews.to_add[] src.=".">
+	</div>
 </vivy:template>
 
 <vivy:template name="bike-part-fields">
@@ -260,10 +269,16 @@
 			<option>To keep</option>
 		</select>
 	</label>
+	<div .previews.existing.length? class="image-previews">
+		<img .previews.existing[] src.=".">
+	</div>
 	<label>
 		<strong>Add picture: </strong>
-		<input .pictures type="file" accept="image/*;capture=camera" multiple>
+		<input .new_pictures @change="$.update_previews" type="file" accept="image/*;capture=camera" multiple>
 	</label>
+	<div .previews.to_add.length? class="image-previews">
+		<img .previews.to_add[] src.=".">
+	</div>
 </vivy:template>
 
 <script async src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
@@ -286,13 +301,24 @@ async function uploadPictures(pictures, folder, prefix) {
 	return results.map(r => r.data.path);
 }
 
-async function saveBikePart(part) {
-	const pictures = await uploadPictures(part.pictures, "bike-parts", part.name);
+async function getPublicUrls(paths) {
+	const { data, error } = await db.storage.from("inventory-images").createSignedUrls(paths, 60);
+	if (error) return console.error(error);
+
+	return data.map(d => d.signedUrl);
+}
+
+async function saveBikePart({ previews, new_pictures, ...part }) {
+	const uploaded = await uploadPictures(new_pictures, "bike-parts", part.name);
+	const pictures = [...part.pictures, ...uploaded];
+
 	return db.from("bike_parts").upsert({ ...part, pictures }).select("id");
 }
 
-async function saveBike(bike) {
-	const pictures = await uploadPictures(bike.pictures, "bikes", bike.make_model + "-" + bike.serial_number);
+async function saveBike({ previews, new_pictures, ...bike }) {
+	const uploaded = await uploadPictures(new_pictures, "bikes", bike.make_model + "-" + bike.serial_number);
+	const pictures = [...bike.pictures, ...uploaded];
+
 	return db.from("bikes").upsert({ ...bike, pictures }).select("id");
 }
 
@@ -398,6 +424,12 @@ const page = vivy(document.body, {
 		page.new_bike = {};
 		page.show_home = false;
 	},
+	edit_bike: async (bike) => {
+		page.new_bike = bike;
+		page.new_bike.previews = {
+			existing: await getPublicUrls(bike.pictures),
+		};
+	},
 	save_bike: async (_, new_bike) => {
 		const { data, error } = await saveBike(new_bike);
 		if (error) return console.error(error);
@@ -408,6 +440,12 @@ const page = vivy(document.body, {
 	add_bike_part: () => {
 		page.new_bike_part = {};
 		page.show_home = false;
+	},
+	edit_bike_part: async (bike_part) => {
+		page.new_bike_part = bike_part;
+		page.new_bike_part.previews = {
+			existing: await getPublicUrls(bike_part.pictures),
+		};
 	},
 	save_bike_part: async (_, new_bike_part) => {
 		const { data, error } = await saveBikePart(new_bike_part);
@@ -547,8 +585,8 @@ const page = vivy(document.body, {
 			edit: (_, item) => {
 				console.log(item.toJSON());
 				if(item.contact) page.new_contact = item.contact;
-				else if(item.bike) page.new_bike = item.bike;
-				else if(item.part) page.new_bike_part = item.part;
+				else if(item.bike) page.edit_bike(item.bike);
+				else if(item.part) page.edit_bike_part(item.part);
 				else if(item.donation) page.edit_donation(item.donation);
 
 				page.inventory.show = false;
@@ -581,6 +619,11 @@ const page = vivy(document.body, {
 			},
 		};
 	})(),
+
+	update_previews: (_, item) => {
+		item.previews ??= {};
+		item.previews.to_add = item.new_pictures.map(file => URL.createObjectURL(file));
+	}
 });
 
 db.auth.onAuthStateChange((event, session) => {
