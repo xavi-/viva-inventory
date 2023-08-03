@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Make QR Codes</title>
+<style>
+#codes { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; }
+#codes img { margin: auto; }
+#codes > div { margin: 24px; text-align: center; font-family: monospace; font-size: 11px }
+
+@media print {
+	h1, label { display: none; }
+}
+</style>
+</head>
+<body>
+<h1>QR Codes for Bikes</h1>
+<label>Count: <input id="count" type="number" value="20" /></label>
+<div id="codes">
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+function base36(num) { return num.toString(36); }
+
+function generateCodes(count) {
+	const codes = document.getElementById("codes");
+	codes.innerHTML = "";
+
+	for(let idx = 0; idx < count; idx++) {
+		const div = document.createElement("div");
+		const serialNumber =
+			`vib-${base36(Date.now()).substr(3)}${base36(idx)}-${base36(Math.PI * Math.random()).substr(6)}`
+		;
+		const qr = new QRCode(div, {
+			text: serialNumber,
+			width: 128,
+			height: 128,
+			colorDark : "#000000",
+			colorLight : "#ffffff",
+			correctLevel : QRCode.CorrectLevel.H
+		});
+
+		const title = document.createElement("div");
+		title.innerText = serialNumber;
+
+		div.appendChild(title);
+		codes.appendChild(div);
+	}
+}
+
+const input = document.getElementById("count");
+input.addEventListener("change", () => generateCodes(input.valueAsNumber));
+
+generateCodes(input.valueAsNumber);
+</script>
+</body>
+</html>
