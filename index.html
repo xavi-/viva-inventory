@@ -301,6 +301,7 @@
 </vivy:template>
 
 <script async src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script src="https://js.sentry-cdn.com/e1000d150bbac32f50d0d0fd982d6690.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://xavi-.github.io/vivy.js/vivy.js"></script>
 <script>
@@ -308,6 +309,11 @@ const db = supabase.createClient(
 	"https://sigezbqbtdhuftmkzyys.supabase.co",
 	"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpZ2V6YnFidGRodWZ0bWt6eXlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODc1NzI0NTcsImV4cCI6MjAwMzE0ODQ1N30.102HwkvuMQLRVcWY2sI8kXwHQemxaZW5GxAIYbHScF4"
 );
+
+function logerr(err) {
+	console.error(err);
+	Raven.captureException(err, { level: 'error' });
+}
 
 async function uploadPictures(pictures, folder, prefix) {
 	const uploads = pictures?.map(pic => {
@@ -322,7 +328,7 @@ async function uploadPictures(pictures, folder, prefix) {
 	}) ?? [];
 	const results = await Promise.all(uploads);
 	for(const result of results) {
-		if (result.error) { console.error(result.error); return []; }
+		if (result.error) { logerr(result.error); return []; }
 	}
 
 	return results.map(r => r.data.path);
@@ -332,7 +338,7 @@ async function getPublicUrls(paths) {
 	if(paths.length <= 0) return [];
 
 	const { data, error } = await db.storage.from("inventory-images").createSignedUrls(paths, 300);
-	if (error) { console.error(error); return []; }
+	if (error) { logerr(error); return []; }
 
 	return data.map(d => d.signedUrl);
 }
@@ -366,11 +372,11 @@ const page = vivy(document.body, {
 			provider: "google",
 			options: { redirectTo: window.location.origin + window.location.pathname },
 		});
-		if (error) return console.error(error);
+		if (error) return logerr(error);
 	},
 	sign_out: async () => {
 		const { error } = await db.auth.signOut();
-		if (error) return console.error(error);
+		if (error) return logerr(error);
 	},
 
 	add_donation: () => {
@@ -385,9 +391,9 @@ const page = vivy(document.body, {
 		];
 		const [contact, bike, bike_part] = await Promise.all(promises);
 
-		if(contact.error) return console.error(contact.error);
-		if(bike.error) return console.error(bike.error);
-		if(bike_part.error) return console.error(bike_part.error);
+		if(contact.error) return logerr(contact.error);
+		if(bike.error) return logerr(bike.error);
+		if(bike_part.error) return logerr(bike_part.error);
 
 		page.new_donation = {
 			id: donation.id,
@@ -455,7 +461,7 @@ const page = vivy(document.body, {
 			bike_part: bikePartRes.data?.[0].id,
 		};
 		const { data, error } = await db.from("donations").upsert(donation);
-		if (error) return console.error(error);
+		if (error) return logerr(error);
 
 		page.go_home();
 	},
@@ -472,7 +478,7 @@ const page = vivy(document.body, {
 	},
 	save_bike: async (_, new_bike) => {
 		const { data, error } = await saveBike(new_bike);
-		if (error) return console.error(error);
+		if (error) return logerr(error);
 
 		page.go_home();
 	},
@@ -489,7 +495,7 @@ const page = vivy(document.body, {
 	},
 	save_bike_part: async (_, new_bike_part) => {
 		const { data, error } = await saveBikePart(new_bike_part);
-		if (error) return console.error(error);
+		if (error) return logerr(error);
 
 		page.go_home();
 	},
@@ -500,7 +506,7 @@ const page = vivy(document.body, {
 	},
 	save_contact: async (_, new_contact) => {
 		const { data, error } = await db.from("contacts").upsert(page.new_contact);
-		if (error) return console.error(error);
+		if (error) return logerr(error);
 
 		page.go_home();
 	},
